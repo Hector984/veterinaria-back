@@ -2,23 +2,30 @@
 
 namespace App\Http\Controllers\auth;
 
+use App\Actions\Veterinary\CreateNewUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function register(StoreUserRequest $request)
+    public function register(StoreUserRequest $request, CreateNewUser $createNewUser)
     {
 
         // Create the user
-        $user = User::create($request->validated());
+        $user = $createNewUser->create($request->validated());
+
+        // Dispara el evento para enviar el correo de verificación
+        event(new Registered($user));
 
         // Return a response
-        return response()->json(['message' => 'Usuario registrado', 'user' => new UserResource($user)], 201);
+        return response()->json([
+            'message' => 'Usuario registrado. Revisa tu correo para verificar tu cuenta.', 
+            'user' => new UserResource($user)], 201);
     }
 
     public function login(Request $request)

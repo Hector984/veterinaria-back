@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\auth\AuthController;
 use App\Models\User;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,20 @@ Route::get('/users', function() {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    if ($request->hasValidSignature()) {
+        $user = User::findOrFail($request->route('id'));
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+
+        return response()->json(['message' => 'Correo verificado con éxito.']);
+    }
+
+    return response()->json(['message' => 'Enlace inválido o expirado.'], 403);
+})->middleware('signed');
 
 // Login
 // Route::post('/login', function (Request $request) {
